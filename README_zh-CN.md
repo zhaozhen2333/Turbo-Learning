@@ -13,7 +13,7 @@
 [![MMDetection](https://img.shields.io/badge/MMDetection-3.3.0-4B8BBE.svg)](https://github.com/open-mmlab/mmdetection)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.12371-b31b1b.svg)](https://arxiv.org/abs/2606.12371)
 [![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.cviu.2026.104827-blue.svg)](https://doi.org/10.1016/j.cviu.2026.104827)
-[![Checkpoints](https://img.shields.io/badge/Checkpoints-21_models-success.svg)](#模型权重)
+[![Checkpoints](https://img.shields.io/badge/Checkpoints-18_models-success.svg)](#模型权重)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 [论文](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [模型权重](#模型权重) · [代码](https://github.com/zhaozhen2333/Turbo-Learning)
@@ -52,7 +52,7 @@
 - **联合提升**：分割结果反向帮助检测，同时提高 bbox AP 和 mask AP。
 - **适用范围广**：提供 Mask R-CNN、Cascade Mask R-CNN/HTC、QueryInst/Sparse R-CNN 和 RTMDet-Ins 的实验路径。
 - **结果可复现**：发布的 Mask R-CNN 实现已在完整的 5,000 张 COCO 2017 验证集图像上重新评测。
-- **权重开箱即用**：[Checkpoint Zoo](#模型权重) 整理了 21 个预训练模型的原始下载地址和对应配置。
+- **权重开箱即用**：[Checkpoint Zoo](#模型权重) 整理了 18 个预训练模型的原始下载地址和对应配置。
 
 ## 可视化结果
 
@@ -185,10 +185,6 @@ wget -P checkpoints \
 | QueryInst R50-FPN，100 proposals | [配置](configs/queryinst/queryinst_r50_fpn_ms-480-800-3x_coco.py) | [下载](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r50_fpn_mstrain_480-800_3x_coco/queryinst_r50_fpn_mstrain_480-800_3x_coco_20210901_103643-7837af86.pth) |
 | RTMDet-Tiny | [配置](configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py) | [下载](https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth) |
 | ViTDet Mask R-CNN ViT-B | [配置](projects/ViTDet/configs/vitdet_mask-rcnn_vit-b-mae_lsj-100e.py) | [下载](https://download.openmmlab.com/mmdetection/v3.0/vitdet/vitdet_mask-rcnn_vit-b-mae_lsj-100e/vitdet_mask-rcnn_vit-b-mae_lsj-100e_20230328_153519-e15fe294.pth) |
-| YOLOv12-M Seg | [来源](https://github.com/sunsmarterjie/yolov12) | [下载](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12m-seg.pt) |
-| YOLOv12-L Seg | [来源](https://github.com/sunsmarterjie/yolov12) | [下载](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12l-seg.pt) |
-| YOLOv12-X Seg | [来源](https://github.com/sunsmarterjie/yolov12) | [下载](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12x-seg.pt) |
-
 </details>
 
 ## 快速开始

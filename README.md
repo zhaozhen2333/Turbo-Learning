@@ -13,7 +13,7 @@ Beijing Forestry University · Tsinghua University · Chinese Institute for Brai
 [![MMDetection](https://img.shields.io/badge/MMDetection-3.3.0-4B8BBE.svg)](https://github.com/open-mmlab/mmdetection)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.12371-b31b1b.svg)](https://arxiv.org/abs/2606.12371)
 [![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.cviu.2026.104827-blue.svg)](https://doi.org/10.1016/j.cviu.2026.104827)
-[![Checkpoints](https://img.shields.io/badge/Checkpoints-21_models-success.svg)](#checkpoints)
+[![Checkpoints](https://img.shields.io/badge/Checkpoints-18_models-success.svg)](#checkpoints)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 [Paper](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [Checkpoints](#checkpoints) · [Code](https://github.com/zhaozhen2333/Turbo-Learning)
@@ -52,7 +52,7 @@ Detection → coarse masks → refined boxes and scores → refined masks
 - **Joint improvement:** both bounding-box AP and mask AP benefit from segmentation feedback.
 - **Broad applicability:** experimental paths are provided for Mask R-CNN, Cascade Mask R-CNN/HTC, QueryInst/Sparse R-CNN, and RTMDet-Ins.
 - **Reproducible:** the released Mask R-CNN implementation has been freshly evaluated on all 5,000 COCO 2017 validation images.
-- **Ready-to-use weights:** the [Checkpoint Zoo](#checkpoints) provides 21 pretrained models with original release links and matching configs.
+- **Ready-to-use weights:** the [Checkpoint Zoo](#checkpoints) provides 18 pretrained models with original release links and matching configs.
 
 ## Qualitative Results
 
@@ -185,10 +185,6 @@ wget -P checkpoints \
 | QueryInst R50-FPN, 100 proposals | [config](configs/queryinst/queryinst_r50_fpn_ms-480-800-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r50_fpn_mstrain_480-800_3x_coco/queryinst_r50_fpn_mstrain_480-800_3x_coco_20210901_103643-7837af86.pth) |
 | RTMDet-Tiny | [config](configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py) | [download](https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth) |
 | ViTDet Mask R-CNN ViT-B | [config](projects/ViTDet/configs/vitdet_mask-rcnn_vit-b-mae_lsj-100e.py) | [download](https://download.openmmlab.com/mmdetection/v3.0/vitdet/vitdet_mask-rcnn_vit-b-mae_lsj-100e/vitdet_mask-rcnn_vit-b-mae_lsj-100e_20230328_153519-e15fe294.pth) |
-| YOLOv12-M Seg | [source](https://github.com/sunsmarterjie/yolov12) | [download](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12m-seg.pt) |
-| YOLOv12-L Seg | [source](https://github.com/sunsmarterjie/yolov12) | [download](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12l-seg.pt) |
-| YOLOv12-X Seg | [source](https://github.com/sunsmarterjie/yolov12) | [download](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12x-seg.pt) |
-
 </details>
 
 ## Quick Start
