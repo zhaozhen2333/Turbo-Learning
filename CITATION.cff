@@ -1,8 +1,33 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite the paper below."
+title: "Turbo-Inference for Object Detection and Instance Segmentation"
 authors:
-  - name: "MMDetection Contributors"
-title: "OpenMMLab Detection Toolbox and Benchmark"
-date-released: 2018-08-22
-url: "https://github.com/open-mmlab/mmdetection"
+  - family-names: Zhao
+    given-names: Zhen
+  - family-names: Zhang
+    given-names: Gang
+  - family-names: Hu
+    given-names: Xiaolin
+  - family-names: Tang
+    given-names: Liang
+date-released: 2026-06-10
+repository-code: "https://github.com/zhaozhen2333/Turbo-Learning"
+url: "https://arxiv.org/abs/2606.12371"
 license: Apache-2.0
+preferred-citation:
+  type: article
+  title: "A turbo-inference strategy for object detection and instance segmentation"
+  authors:
+    - family-names: Zhao
+      given-names: Zhen
+    - family-names: Zhang
+      given-names: Gang
+    - family-names: Hu
+      given-names: Xiaolin
+    - family-names: Tang
+      given-names: Liang
+  journal: "Computer Vision and Image Understanding"
+  volume: 270
+  year: 2026
+  doi: "10.1016/j.cviu.2026.104827"
+  url: "https://doi.org/10.1016/j.cviu.2026.104827"

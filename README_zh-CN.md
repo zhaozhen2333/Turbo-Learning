@@ -11,7 +11,11 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.8+-EE4C2C.svg)](https://pytorch.org/)
 [![MMDetection](https://img.shields.io/badge/MMDetection-3.3.0-4B8BBE.svg)](https://github.com/open-mmlab/mmdetection)
+[![arXiv](https://img.shields.io/badge/arXiv-2606.12371-b31b1b.svg)](https://arxiv.org/abs/2606.12371)
+[![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.cviu.2026.104827-blue.svg)](https://doi.org/10.1016/j.cviu.2026.104827)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+
+[论文](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [代码](https://github.com/zhaozhen2333/Turbo-Learning)
 
 [English](README.md) | **简体中文**
 
@@ -225,13 +229,17 @@ Mask R-CNN 和 HTC 默认使用四个阶段：检测、原始分割、Turbo 检�
 
 ```bibtex
 @article{zhao2026turboinference,
-  title   = {A Turbo-Inference Strategy for Object Detection and Instance Segmentation},
+  title   = {A turbo-inference strategy for object detection and instance segmentation},
   author  = {Zhao, Zhen and Zhang, Gang and Hu, Xiaolin and Tang, Liang},
-  year    = {2026}
+  journal = {Computer Vision and Image Understanding},
+  volume  = {270},
+  pages   = {104827},
+  year    = {2026},
+  doi     = {10.1016/j.cviu.2026.104827}
 }
 ```
 
-论文发表后，我们会补充正式的期刊和 arXiv 信息。
+预印本：[arXiv:2606.12371](https://arxiv.org/abs/2606.12371)。
 
 ## 致谢
 
