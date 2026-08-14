@@ -17,6 +17,8 @@ Beijing Forestry University · Tsinghua University · Chinese Institute for Brai
 
 [Paper](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [Code](https://github.com/zhaozhen2333/Turbo-Learning)
 
+> **Official implementation** of “A Turbo-Inference Strategy for Object Detection and Instance Segmentation,” published in *Computer Vision and Image Understanding* (CVIU), 2026.
+
 **English** | [简体中文](README_zh-CN.md)
 
 </div>

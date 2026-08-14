@@ -17,6 +17,8 @@
 
 [论文](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [代码](https://github.com/zhaozhen2333/Turbo-Learning)
 
+> **官方实现**：“A Turbo-Inference Strategy for Object Detection and Instance Segmentation”，发表于 *Computer Vision and Image Understanding*（CVIU），2026。
+
 [English](README.md) | **简体中文**
 
 </div>
