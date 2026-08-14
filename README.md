@@ -144,15 +144,60 @@ pip install -v -e .
 
 See the [MMDetection installation guide](https://mmdetection.readthedocs.io/en/latest/get_started.html) if your CUDA or PyTorch version differs.
 
+## Checkpoints
+
+Pretrained weights are not stored in this repository because most files exceed GitHub's 100 MB per-file limit. Download them from their original release sources.
+
+The default Mask R-CNN R50-FPN checkpoint used for the verified results is:
+
+| Model | Config | Checkpoint | SHA-256 |
+|:--|:--|:--|:--|
+| Mask R-CNN R50-FPN 2x | [config](configs/mask_rcnn/mask-rcnn_r50_fpn_2x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_fpn_2x_coco/mask_rcnn_r50_fpn_2x_coco_bbox_mAP-0.392__segm_mAP-0.354_20200505_003907-3e542a40.pth) | `3e542a40…b582b3` |
+
+```bash
+mkdir -p checkpoints
+wget -P checkpoints \
+  https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_fpn_2x_coco/mask_rcnn_r50_fpn_2x_coco_bbox_mAP-0.392__segm_mAP-0.354_20200505_003907-3e542a40.pth
+```
+
+<details>
+<summary><b>Complete checkpoint zoo used in our experiments</b></summary>
+
+| Model | Config / source | Official checkpoint |
+|:--|:--|:--|
+| Cascade Mask R-CNN ConvNeXt-S | [config](configs/convnext/cascade-mask-rcnn_convnext-s-p4-w7_fpn_4conv1fc-giou_amp-ms-crop-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/convnext/cascade_mask_rcnn_convnext-s_p4_w7_fpn_giou_4conv1f_fp16_ms-crop_3x_coco/cascade_mask_rcnn_convnext-s_p4_w7_fpn_giou_4conv1f_fp16_ms-crop_3x_coco_20220510_201004-3d24f5a4.pth) |
+| Cascade Mask R-CNN ConvNeXt-T | [config](configs/convnext/cascade-mask-rcnn_convnext-t-p4-w7_fpn_4conv1fc-giou_amp-ms-crop-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/convnext/cascade_mask_rcnn_convnext-t_p4_w7_fpn_giou_4conv1f_fp16_ms-crop_3x_coco/cascade_mask_rcnn_convnext-t_p4_w7_fpn_giou_4conv1f_fp16_ms-crop_3x_coco_20220509_204200-8f07c40b.pth) |
+| HTC R101-FPN 20e | [config](configs/htc/htc_r101_fpn_20e_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/htc/htc_r101_fpn_20e_coco/htc_r101_fpn_20e_coco_20200317-9b41b48f.pth) |
+| HTC R50-FPN 1x | [config](configs/htc/htc_r50_fpn_1x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/htc/htc_r50_fpn_1x_coco/htc_r50_fpn_1x_coco_20200317-7332cf16.pth) |
+| Mask R-CNN ConvNeXt-v2-B | [config](projects/ConvNeXt-V2/configs/mask-rcnn_convnext-v2-b_fpn_lsj-3x-fcmae_coco.py) | [download](https://download.openmmlab.com/mmdetection/v3.0/convnextv2/mask-rcnn_convnext-v2-b_fpn_lsj-3x-fcmae_coco/mask-rcnn_convnext-v2-b_fpn_lsj-3x-fcmae_coco_20230113_110947-757ee2dd.pth) |
+| Mask R-CNN ConvNeXt-T | [config](configs/convnext/mask-rcnn_convnext-t-p4-w7_fpn_amp-ms-crop-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/convnext/mask_rcnn_convnext-t_p4_w7_fpn_fp16_ms-crop_3x_coco/mask_rcnn_convnext-t_p4_w7_fpn_fp16_ms-crop_3x_coco_20220426_154953-050731f4.pth) |
+| Mask R-CNN R101-FPN 2x | [config](configs/mask_rcnn/mask-rcnn_r101_fpn_2x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r101_fpn_2x_coco/mask_rcnn_r101_fpn_2x_coco_bbox_mAP-0.408__segm_mAP-0.366_20200505_071027-14b391c7.pth) |
+| Mask R-CNN R50-FPN 2x | [config](configs/mask_rcnn/mask-rcnn_r50_fpn_2x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_r50_fpn_2x_coco/mask_rcnn_r50_fpn_2x_coco_bbox_mAP-0.392__segm_mAP-0.354_20200505_003907-3e542a40.pth) |
+| Mask R-CNN Swin-S | [config](configs/swin/mask-rcnn_swin-s-p4-w7_fpn_amp-ms-crop-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/swin/mask_rcnn_swin-s-p4-w7_fpn_fp16_ms-crop-3x_coco/mask_rcnn_swin-s-p4-w7_fpn_fp16_ms-crop-3x_coco_20210903_104808-b92c91f1.pth) |
+| Mask R-CNN Swin-T | [config](configs/swin/mask-rcnn_swin-t-p4-w7_fpn_amp-ms-crop-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/swin/mask_rcnn_swin-t-p4-w7_fpn_fp16_ms-crop-3x_coco/mask_rcnn_swin-t-p4-w7_fpn_fp16_ms-crop-3x_coco_20210908_165006-90a4008c.pth) |
+| Mask R-CNN X101-64x4d-FPN | [config](configs/mask_rcnn/mask-rcnn_x101-64x4d_fpn_1x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/mask_rcnn/mask_rcnn_x101_64x4d_fpn_1x_coco/mask_rcnn_x101_64x4d_fpn_1x_coco_20200201-9352eb0d.pth) |
+| QueryInst R101-FPN, 300 proposals | [config](configs/queryinst/queryinst_r101_fpn_300-proposals_crop-ms-480-800-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r101_fpn_300_proposals_crop_mstrain_480-800_3x_coco/queryinst_r101_fpn_300_proposals_crop_mstrain_480-800_3x_coco_20210904_153621-76cce59f.pth) |
+| QueryInst R101-FPN, 100 proposals | [config](configs/queryinst/queryinst_r101_fpn_ms-480-800-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r101_fpn_mstrain_480-800_3x_coco/queryinst_r101_fpn_mstrain_480-800_3x_coco_20210904_104048-91f9995b.pth) |
+| QueryInst R50-FPN 1x | [config](configs/queryinst/queryinst_r50_fpn_1x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r50_fpn_1x_coco/queryinst_r50_fpn_1x_coco_20210907_084916-5a8f1998.pth) |
+| QueryInst R50-FPN, 300 proposals | [config](configs/queryinst/queryinst_r50_fpn_300-proposals_crop-ms-480-800-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r50_fpn_300_proposals_crop_mstrain_480-800_3x_coco/queryinst_r50_fpn_300_proposals_crop_mstrain_480-800_3x_coco_20210904_101802-85cffbd8.pth) |
+| QueryInst R50-FPN, 100 proposals | [config](configs/queryinst/queryinst_r50_fpn_ms-480-800-3x_coco.py) | [download](https://download.openmmlab.com/mmdetection/v2.0/queryinst/queryinst_r50_fpn_mstrain_480-800_3x_coco/queryinst_r50_fpn_mstrain_480-800_3x_coco_20210901_103643-7837af86.pth) |
+| RTMDet-Tiny | [config](configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py) | [download](https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth) |
+| ViTDet Mask R-CNN ViT-B | [config](projects/ViTDet/configs/vitdet_mask-rcnn_vit-b-mae_lsj-100e.py) | [download](https://download.openmmlab.com/mmdetection/v3.0/vitdet/vitdet_mask-rcnn_vit-b-mae_lsj-100e/vitdet_mask-rcnn_vit-b-mae_lsj-100e_20230328_153519-e15fe294.pth) |
+| YOLOv12-M Seg | [source](https://github.com/sunsmarterjie/yolov12) | [download](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12m-seg.pt) |
+| YOLOv12-L Seg | [source](https://github.com/sunsmarterjie/yolov12) | [download](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12l-seg.pt) |
+| YOLOv12-X Seg | [source](https://github.com/sunsmarterjie/yolov12) | [download](https://github.com/sunsmarterjie/yolov12/releases/download/seg/yolov12x-seg.pt) |
+
+</details>
+
 ## Quick Start
 
-Place the public Mask R-CNN R50-FPN 2x checkpoint on disk, then run:
+Download the default checkpoint above, then run:
 
 ```bash
 python demo/image_demo.py \
   demo/demo.jpg \
   configs/mask_rcnn/mask-rcnn_r50_fpn_2x_coco.py \
-  --weights /path/to/mask_rcnn_r50_fpn_2x_coco.pth \
+  --weights checkpoints/mask_rcnn_r50_fpn_2x_coco_bbox_mAP-0.392__segm_mAP-0.354_20200505_003907-3e542a40.pth \
   --device cuda:0 \
   --out-dir outputs/turbo_mask_rcnn
 ```
