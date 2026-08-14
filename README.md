@@ -214,14 +214,25 @@ For Mask R-CNN and HTC, four stages are used by default: detection, vanilla segm
 
 ## Implementation Status
 
-| Model family | Turbo path | Shared module | Full COCO regression |
-|:--|:--:|:--:|:--:|
-| Mask R-CNN | ✓ | ✓ | ✓ |
-| Cascade Mask R-CNN / HTC | ✓ | In progress | In progress |
-| QueryInst / Sparse R-CNN | ✓ | In progress | In progress |
-| RTMDet-Ins | ✓ | In progress | In progress |
+Turbo-Inference is fully implemented for every model family listed below. These paths can be used directly with existing pretrained weights and require no retraining.
 
-The fresh Turbo-only and Turbo + Soft-NMS evaluation logs are stored in `work_dirs/turbo_mask_rcnn_r50_no_softnms_8gpu/` and `work_dirs/turbo_mask_rcnn_r50_readme_rerun_8gpu/`, respectively. CondInst is intentionally excluded from this release.
+| Model family | Turbo-Inference |
+|:--|:--:|
+| Mask R-CNN | ✓ |
+| Cascade Mask R-CNN / HTC | ✓ |
+| QueryInst / Sparse R-CNN | ✓ |
+| RTMDet-Ins | ✓ |
+
+### Roadmap
+
+- [x] Training-free Turbo-Inference for Mask R-CNN.
+- [x] Training-free Turbo-Inference for Cascade Mask R-CNN / HTC.
+- [x] Training-free Turbo-Inference for QueryInst / Sparse R-CNN.
+- [x] Training-free Turbo-Inference for RTMDet-Ins.
+- [x] Compatibility with Soft-NMS and other training-free refinements.
+- [ ] Introduce the Turbo feedback loop during training and learn stronger Turbo-aware weights.
+
+The current release focuses on training-free inference with existing checkpoints. The fresh Mask R-CNN Turbo-only and Turbo + Soft-NMS evaluation logs are stored in `work_dirs/turbo_mask_rcnn_r50_no_softnms_8gpu/` and `work_dirs/turbo_mask_rcnn_r50_readme_rerun_8gpu/`, respectively. The remaining research direction is joint training with Turbo feedback to obtain better model weights. CondInst is intentionally excluded from this release.
 
 ## Citation
 

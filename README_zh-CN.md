@@ -214,14 +214,25 @@ Mask R-CNN 和 HTC 默认使用四个阶段：检测、原始分割、Turbo 检�
 
 ## 实现进度
 
-| 模型系列 | Turbo 路径 | 共享模块 | 完整 COCO 回归 |
-|:--|:--:|:--:|:--:|
-| Mask R-CNN | ✓ | ✓ | ✓ |
-| Cascade Mask R-CNN / HTC | ✓ | 进行中 | 进行中 |
-| QueryInst / Sparse R-CNN | ✓ | 进行中 | 进行中 |
-| RTMDet-Ins | ✓ | 进行中 | 进行中 |
+下列所有模型系列均已完整实现 Turbo-Inference，可以直接使用现有预训练权重，无需重新训练。
 
-本次重新评测的 Turbo-only 和 Turbo + Soft-NMS 日志分别保存在 `work_dirs/turbo_mask_rcnn_r50_no_softnms_8gpu/` 和 `work_dirs/turbo_mask_rcnn_r50_readme_rerun_8gpu/`。本次发布不包含 CondInst 实验。
+| 模型系列 | Turbo-Inference |
+|:--|:--:|
+| Mask R-CNN | ✓ |
+| Cascade Mask R-CNN / HTC | ✓ |
+| QueryInst / Sparse R-CNN | ✓ |
+| RTMDet-Ins | ✓ |
+
+### Roadmap
+
+- [x] Mask R-CNN 的 training-free Turbo-Inference。
+- [x] Cascade Mask R-CNN / HTC 的 training-free Turbo-Inference。
+- [x] QueryInst / Sparse R-CNN 的 training-free Turbo-Inference。
+- [x] RTMDet-Ins 的 training-free Turbo-Inference。
+- [x] 与 Soft-NMS 等其他 training-free 优化方法兼容。
+- [ ] 在训练阶段引入 Turbo 反馈闭环，学习更强的 Turbo-aware 权重。
+
+当前版本聚焦于使用已有 checkpoint 的 training-free 推理。本次重新评测的 Mask R-CNN Turbo-only 和 Turbo + Soft-NMS 日志分别保存在 `work_dirs/turbo_mask_rcnn_r50_no_softnms_8gpu/` 和 `work_dirs/turbo_mask_rcnn_r50_readme_rerun_8gpu/`。目前唯一剩余的研究方向是在训练阶段加入 Turbo 反馈，从而获得更好的模型权重。本次发布不包含 CondInst 实验。
 
 ## 引用
 
