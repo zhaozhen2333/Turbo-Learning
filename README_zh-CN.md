@@ -13,9 +13,10 @@
 [![MMDetection](https://img.shields.io/badge/MMDetection-3.3.0-4B8BBE.svg)](https://github.com/open-mmlab/mmdetection)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.12371-b31b1b.svg)](https://arxiv.org/abs/2606.12371)
 [![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.cviu.2026.104827-blue.svg)](https://doi.org/10.1016/j.cviu.2026.104827)
+[![Checkpoints](https://img.shields.io/badge/Checkpoints-21_models-success.svg)](#模型权重)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-[论文](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [代码](https://github.com/zhaozhen2333/Turbo-Learning)
+[论文](https://doi.org/10.1016/j.cviu.2026.104827) · [arXiv](https://arxiv.org/abs/2606.12371) · [PDF](https://arxiv.org/pdf/2606.12371) · [模型权重](#模型权重) · [代码](https://github.com/zhaozhen2333/Turbo-Learning)
 
 > **官方实现**：“A Turbo-Inference Strategy for Object Detection and Instance Segmentation”，发表于 *Computer Vision and Image Understanding*（CVIU），2026。
 
@@ -51,6 +52,7 @@
 - **联合提升**：分割结果反向帮助检测，同时提高 bbox AP 和 mask AP。
 - **适用范围广**：提供 Mask R-CNN、Cascade Mask R-CNN/HTC、QueryInst/Sparse R-CNN 和 RTMDet-Ins 的实验路径。
 - **结果可复现**：发布的 Mask R-CNN 实现已在完整的 5,000 张 COCO 2017 验证集图像上重新评测。
+- **权重开箱即用**：[Checkpoint Zoo](#模型权重) 整理了 21 个预训练模型的原始下载地址和对应配置。
 
 ## 可视化结果
 
