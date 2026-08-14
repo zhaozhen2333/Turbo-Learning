@@ -156,7 +156,7 @@ def empty_instances(batch_img_metas: List[dict],
     Returns:
         list[:obj:`InstanceData`]: Detection results of each image
     """
-    assert task_type in ('bbox', 'mask'), 'Only support bbox and mask,' \
+    assert task_type in ('bbox', 'mask', 'all'), 'Only support bbox and mask,' \
                                           f' but got {task_type}'
 
     if instance_results is not None:
@@ -181,6 +181,29 @@ def empty_instances(batch_img_metas: List[dict],
             results.labels = torch.zeros((0, ),
                                          device=device,
                                          dtype=torch.long)
+        elif task_type == 'all':
+            _, box_type = get_box_type(box_type)
+            bboxes = torch.zeros(0, box_type.box_dim, device=device)
+            if use_box_type:
+                bboxes = box_type(bboxes, clone=False)
+            results.bboxes = bboxes
+            score_shape = (0, num_classes + 1) if score_per_cls else (0,)
+            results.scores = torch.zeros(score_shape, device=device)
+            results.labels = torch.zeros((0,),
+                                         device=device,
+                                         dtype=torch.long)
+
+            # TODO: Handle the case where rescale is false
+            img_h, img_w = batch_img_metas[img_id]['ori_shape'][:2]
+            # the type of `im_mask` will be torch.bool or torch.uint8,
+            # where uint8 if for visualization and debugging.
+            im_mask = torch.zeros(
+                0,
+                img_h,
+                img_w,
+                device=device,
+                dtype=torch.bool if mask_thr_binary >= 0 else torch.uint8)
+            results.masks = im_mask
         else:
             # TODO: Handle the case where rescale is false
             img_h, img_w = batch_img_metas[img_id]['ori_shape'][:2]

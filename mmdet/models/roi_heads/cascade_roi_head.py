@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Sequence, Tuple, Union
-
+import torch.nn.functional as F
 import torch
 import torch.nn as nn
 from mmengine.model import ModuleList
@@ -120,7 +120,10 @@ class CascadeRoIHead(BaseRoIHead):
                         default_args=dict(context=self)))
 
     def _bbox_forward(self, stage: int, x: Tuple[Tensor],
-                      rois: Tensor) -> dict:
+                      rois: Tensor,
+                      object_feats: Tensor = None,
+                      batch_img_metas: List[dict] = None
+                      ) -> dict:
         """Box head forward function used in both training and testing.
 
         Args:
@@ -465,6 +468,8 @@ class CascadeRoIHead(BaseRoIHead):
                    for the last stage of per image.
         """
         # "ms" in variable names means multi-stage
+        print("Using bbox_forward from:", self._bbox_forward.__qualname__)
+
         ms_scores = []
         for stage in range(self.num_stages):
             bbox_results = self._bbox_forward(
@@ -566,3 +571,300 @@ class CascadeRoIHead(BaseRoIHead):
                 merged_masks.append(merged_mask)
             results = results + (merged_masks, )
         return results
+
+    def predict(self,
+                x: Tuple[Tensor],
+                rpn_results_list: InstanceList,
+                batch_data_samples: SampleList,
+                rescale: bool = False) -> InstanceList:
+        """Perform forward propagation of the roi head and predict detection
+        results on the features of the upstream network.
+
+        Args:
+            x (tuple[Tensor]): Features from upstream network. Each
+                has shape (N, C, H, W).
+            rpn_results_list (list[:obj:`InstanceData`]): list of region
+                proposals.
+            batch_data_samples (List[:obj:`DetDataSample`]): The Data
+                Samples. It usually includes information such as
+                `gt_instance`, `gt_panoptic_seg` and `gt_sem_seg`.
+            rescale (bool): Whether to rescale the results to
+                the original image. Defaults to True.
+
+        Returns:
+            list[obj:`InstanceData`]: Detection results of each image.
+            Each item usually contains following keys.
+
+                - scores (Tensor): Classification scores, has a shape
+                  (num_instance, )
+                - labels (Tensor): Labels of bboxes, has a shape
+                  (num_instances, ).
+                - bboxes (Tensor): Has a shape (num_instances, 4),
+                  the last dimension 4 arrange as (x1, y1, x2, y2).
+                - masks (Tensor): Has a shape (num_instances, H, W).
+        """
+        assert self.with_bbox, 'Bbox head must be implemented.'
+        batch_img_metas = [
+            data_samples.metainfo for data_samples in batch_data_samples
+        ]
+
+        # TODO: nms_op in mmcv need be enhanced, the bbox result may get
+        #  difference when not rescale in bbox_head
+
+        # If it has the mask branch, the bbox branch does not need
+        # to be scaled to the original image scale, because the mask
+        # branch will scale both bbox and mask at the same time.
+        bbox_rescale = rescale if not self.with_mask else False
+
+        proposals = [res.bboxes for res in rpn_results_list]
+        num_proposals_per_img = tuple(len(p) for p in proposals)
+        rois = bbox2roi(proposals)
+
+        if rois.shape[0] == 0:
+            results_list = empty_instances(
+                batch_img_metas,
+                rois.device,
+                task_type='bbox',
+                box_type=self.bbox_head[-1].predict_box_type,
+                num_classes=self.bbox_head[-1].num_classes,
+                score_per_cls=self.test_cfg is None)
+            results_list = empty_instances(
+                batch_img_metas,
+                rois.device,
+                task_type='mask',
+                instance_results=results_list,
+                mask_thr_binary=self.test_cfg.mask_thr_binary)
+        else:
+            rois, cls_scores, bbox_preds = self._refine_roi(
+                x=x,
+                rois=rois,
+                batch_img_metas=batch_img_metas,
+                num_proposals_per_img=num_proposals_per_img)
+            results_list = self.bbox_head[-1].predict_by_feat(
+                rois=rois,
+                cls_scores=cls_scores,
+                bbox_preds=bbox_preds,
+                batch_img_metas=batch_img_metas,
+                rescale=bbox_rescale,
+                rcnn_test_cfg=self.test_cfg)
+
+            bboxes = [res.bboxes for res in results_list]
+            mask_rois = bbox2roi(bboxes)
+            if mask_rois.shape[0] == 0:
+                results_list = empty_instances(
+                    batch_img_metas,
+                    mask_rois.device,
+                    task_type='mask',
+                    instance_results=results_list,
+                    mask_thr_binary=self.test_cfg.mask_thr_binary)
+            else:
+                mask_feats = self.mask_roi_extractor[2](x[:self.mask_roi_extractor[2].num_inputs], mask_rois)
+                mask_preds = self.mask_head[2](mask_feats)  # (N, 80, 28, 28)
+                num_mask_rois_per_img = [len(res) for res in results_list]
+                mask_preds = mask_preds.split(num_mask_rois_per_img, 0)
+
+                # aug_masks = []
+                # for stage in range(self.num_stages):
+                #     mask_results = self._mask_forward(stage, x, mask_rois)
+                #     mask_preds = mask_results['mask_preds']
+                #     # split batch mask prediction back to each image
+                #     mask_preds = mask_preds.split(num_mask_rois_per_img, 0)
+                #     aug_masks.append([m.sigmoid().detach() for m in mask_preds])
+                #
+                # merged_masks = []
+                # for i in range(len(batch_img_metas)):
+                #     aug_mask = [mask[i] for mask in aug_masks]
+                #     merged_mask = merge_aug_masks(aug_mask, batch_img_metas[i])
+                #     merged_masks.append(merged_mask)
+
+                # TODO: Handle the case where rescale is false
+                ###
+                # mask_preds = merged_masks
+                # assert len(mask_preds) == len(results_list) == len(batch_img_metas)
+
+                for img_id in range(len(batch_img_metas)):
+                    img_meta = batch_img_metas[img_id]
+                    results = results_list[img_id]
+                    bboxes = results.bboxes
+                    if bboxes.shape[0] == 0:
+                        results_list[img_id] = empty_instances(
+                            [img_meta],
+                            bboxes.device,
+                            task_type='mask',
+                            instance_results=[results],
+                            mask_thr_binary=self.test_cfg.mask_thr_binary)[0]
+                    else:
+                        mask_pred = mask_preds[img_id]
+                        mask_pred = bboxes.new_tensor(mask_pred)
+                        det_label = results.labels
+                        scores = results.scores
+                        img_h, img_w = img_meta['img_shape'][:2]
+
+                        N = len(mask_pred)
+                        mask_pred = mask_pred[range(N), det_label][:, None]  # [13, 1, 28, 28]
+
+                        # maskness.
+                        mask_pred = mask_pred.sigmoid()  # (N, 1, h, w)
+                        seg_masks = (mask_pred.squeeze(1) >= 0.50).to(dtype=torch.float32)  # (N, h, w)
+                        sum_masks = seg_masks.sum((1, 2)).float() + 1e-6
+                        seg_scores = (mask_pred.squeeze(1) * seg_masks.float()).sum((1, 2)) / sum_masks
+                        if torch.isnan(seg_scores).any():
+                            inds = torch.where(torch.isnan(seg_scores))
+                            seg_scores[inds] = 0
+                        mask_score = scores * seg_scores
+                        scores = mask_score * 0.5 + scores * 0.5
+                        results.scores = mask_score
+
+                        bboxes_ = self.mask_processing(
+                            mask_pred, bboxes, img_h, img_w, threshold=0.23)
+
+                        bboxes_[:, [0, 2]].clamp_(min=0, max=img_w)
+                        bboxes_[:, [1, 3]].clamp_(min=0, max=img_h)
+                        bboxes_ = (bboxes_ + bboxes) / 2
+                        results.bboxes = bboxes_
+
+                        # mask_rois = bbox2roi([bboxes])
+                        # mask_feats = self.mask_roi_extractor[-1](x[:self.mask_roi_extractor[-1].num_inputs], mask_rois)
+                        # mask_pred = self.mask_head[-1](mask_feats)  # (N, 80, 28, 28)
+
+                        mask_rois = bbox2roi([bboxes_])
+                        aug_masks = []
+                        merged_masks = []
+                        for stage in range(self.num_stages):
+                            # mask_results = self._mask_forward(stage, x, mask_rois)
+                            # mask_preds = mask_results['mask_preds']
+
+                            mask_roi_extractor = self.mask_roi_extractor[stage]
+                            mask_head = self.mask_head[stage]
+                            mask_feats = mask_roi_extractor(x[:mask_roi_extractor.num_inputs],
+                                                            mask_rois)
+                            # do not support caffe_c4 model anymore
+                            mask_preds = mask_head(mask_feats)  # [79, 80, 28, 28]
+
+                            # split batch mask prediction back to each image
+                            # mask_preds = mask_preds.split(num_mask_rois_per_img, 0)
+                            aug_masks.append(mask_preds.unsqueeze(0))
+                            # aug_masks.append([m.sigmoid().detach() for m in mask_preds])
+
+                        # aug_mask = [mask for mask in aug_masks]
+                        # # aug_mask = aug_masks
+                        # merged_mask = merge_aug_masks(aug_mask, img_meta)
+                        # merged_masks.append(merged_mask)
+
+                        aug_masks = torch.cat(aug_masks, dim=0)
+                        # flip = img_meta['flip']
+                        # assert flip == False
+                        merged_masks = torch.mean(aug_masks, dim=0)
+                        merged_masks = merged_masks.sigmoid().detach()
+
+                        im_mask = self.mask_head[-1]._predict_by_feat_single(
+                            mask_preds=merged_masks,
+                            bboxes=bboxes_,
+                            labels=results.labels,
+                            img_meta=img_meta,
+                            rcnn_test_cfg=self.test_cfg,
+                            rescale=rescale,
+                            activate_map=True)
+                        results.masks = im_mask
+                ###
+
+        return results_list
+
+    def mask_processing(self, mask_pred, rois, img_h, img_w, threshold=0.40):
+        # mask_pred = mask_pred.sigmoid()  # (N, 1, h, w)
+        device = mask_pred.device
+        # img_w = img_shape[1]
+        # img_h = img_shape[0]
+        x0_int, y0_int = 0, 0
+        x1_int, y1_int = img_w, img_h
+        # rois = torch.round(rois)
+        x0, y0, x1, y1 = torch.split(rois, 1, dim=1)  # each is Nx1
+
+        N = mask_pred.shape[0]
+
+        img_y = torch.arange(y0_int, y1_int, device=device).to(torch.float32) + 0.5
+        img_x = torch.arange(x0_int, x1_int, device=device).to(torch.float32) + 0.5
+        img_y = (img_y - y0) / (y1 - y0) * 2 - 1
+        img_x = (img_x - x0) / (x1 - x0) * 2 - 1
+
+        if torch.isinf(img_x).any():
+            inds = torch.where(torch.isinf(img_x))
+            img_x[inds] = 0
+        if torch.isinf(img_y).any():
+            inds = torch.where(torch.isinf(img_y))
+            img_y[inds] = 0
+
+        gx = img_x[:, None, :].expand(N, img_y.size(1), img_x.size(1))
+        gy = img_y[:, :, None].expand(N, img_y.size(1), img_x.size(1))
+        grid = torch.stack([gx, gy], dim=3)
+        del gx, gy, img_x, img_y
+        torch.cuda.empty_cache()
+
+        mask_pred = F.grid_sample(
+            mask_pred.to(dtype=torch.float32), grid, align_corners=False).squeeze(1)  # (N, H, W)
+        del grid
+        torch.cuda.empty_cache()
+
+        # ----------------------------------------------------------------------------------
+        mask_pred_decode = (mask_pred >= threshold).to(dtype=torch.bool)  # (N, h, w)
+        # mask_pred_decode_ = (mask_pred >= threshold).to(dtype=torch.bool)  # (N, h, w)
+        # seg_masks = mask_pred_decode.float()  # (N, h, w)
+        # sum_masks = seg_masks.sum((1, 2)).float()
+
+        del mask_pred
+        torch.cuda.empty_cache()
+
+        # valid_mask = seg_scores > scores_thr  # (N,)
+        # inds = valid_mask.nonzero(as_tuple=False).squeeze(1)  # (N,)
+        # mask_pred_decode = mask_pred_decode[inds]
+        x_any = torch.any(mask_pred_decode, dim=1)  # (N, 600)
+        y_any = torch.any(mask_pred_decode, dim=2)
+        del mask_pred_decode
+        torch.cuda.empty_cache()
+        bbox_change = torch.zeros(N, 4, dtype=torch.float,
+                                  device=device)  # list[tensor(x0, y0, x1, y1), ...]
+        for idx in range(N):
+            x_ = torch.where(x_any[idx, :])[0]
+            y_ = torch.where(y_any[idx, :])[0]
+            if len(x_) > 0 and len(y_) > 0:
+                bbox_change[idx, :] = torch.as_tensor(
+                    [x_[0], y_[0], x_[-1] + 1, y_[-1] + 1], dtype=torch.float32
+                )
+        # rois[inds] = bbox_change
+        # bbox_change = (bbox_change + rois) / 2
+        # return bbox_change, seg_masks, sum_masks, seg_scores  # (N, H, W)
+        # # 获取非零元素的索引
+        # x_idx = torch.nonzero(x_any, as_tuple=True)
+        # y_idx = torch.nonzero(y_any, as_tuple=True)
+        #
+        # # 通过切片获取矩阵的最小和最大值
+        # x_min = x_idx[1][x_idx[0] == 0].min()
+        # x_max = x_idx[1][x_idx[0] == 0].max()
+        # y_min = y_idx[1][y_idx[0] == 0].min()
+        # y_max = y_idx[1][y_idx[0] == 0].max()
+        #
+        # # 构建 bbox_change 矩阵
+        # bbox_change = torch.zeros(N, 4, dtype=torch.float, device=device)
+        # bbox_change[:, 0] = x_min
+        # bbox_change[:, 1] = y_min
+        # bbox_change[:, 2] = x_max + 1
+        # bbox_change[:, 3] = y_max + 1
+
+        # # 获取每一行/列的第一个和最后一个非零元素的索引
+        # sum_x_any = torch.cumsum(x_any, dim=1)
+        # sum_y_any = torch.cumsum(y_any, dim=1)
+        # x_any = sum_x_any * x_any
+        # y_any = sum_y_any * y_any
+        # x_max = torch.argmax(x_any, dim=1)
+        # # x_min = torch.argmax(x_any.flip(1), dim=1)
+        # x_min = torch.argmax((x_any != 0).to(torch.float), dim=1)
+        # y_max = torch.argmax(y_any, dim=1)
+        # # y_min = torch.argmax(y_any.flip(1), dim=1)
+        # y_min = torch.argmax((y_any != 0).to(torch.float), dim=1)
+        #
+        # # 构建 bbox_change 矩阵
+        # # bbox_change = torch.stack([x_min, y_min, x_max.flip([0]) + 1, y_max.flip([0]) + 1], dim=1).to(torch.float)
+        #
+        # bbox_change = torch.stack([x_min, y_min, x_max + 1, y_max + 1], dim=1).to(torch.float)
+
+        return bbox_change  # (N, H, W)

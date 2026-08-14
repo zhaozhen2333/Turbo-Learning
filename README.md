@@ -1,455 +1,242 @@
 <div align="center">
-  <img src="resources/mmdet-logo.png" width="600"/>
-  <div>&nbsp;</div>
-  <div align="center">
-    <b><font size="5">OpenMMLab website</font></b>
-    <sup>
-      <a href="https://openmmlab.com">
-        <i><font size="4">HOT</font></i>
-      </a>
-    </sup>
-    &nbsp;&nbsp;&nbsp;&nbsp;
-    <b><font size="5">OpenMMLab platform</font></b>
-    <sup>
-      <a href="https://platform.openmmlab.com">
-        <i><font size="4">TRY IT OUT</font></i>
-      </a>
-    </sup>
-  </div>
-  <div>&nbsp;</div>
 
-[![PyPI](https://img.shields.io/pypi/v/mmdet)](https://pypi.org/project/mmdet)
-[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmdetection.readthedocs.io/en/latest/)
-[![badge](https://github.com/open-mmlab/mmdetection/workflows/build/badge.svg)](https://github.com/open-mmlab/mmdetection/actions)
-[![codecov](https://codecov.io/gh/open-mmlab/mmdetection/branch/main/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmdetection)
-[![license](https://img.shields.io/github/license/open-mmlab/mmdetection.svg)](https://github.com/open-mmlab/mmdetection/blob/main/LICENSE)
-[![open issues](https://isitmaintained.com/badge/open/open-mmlab/mmdetection.svg)](https://github.com/open-mmlab/mmdetection/issues)
-[![issue resolution](https://isitmaintained.com/badge/resolution/open-mmlab/mmdetection.svg)](https://github.com/open-mmlab/mmdetection/issues)
-[![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_demo.svg)](https://openxlab.org.cn/apps?search=mmdet)
+# A Turbo-Inference Strategy for Object Detection and Instance Segmentation
 
-[📘Documentation](https://mmdetection.readthedocs.io/en/latest/) |
-[🛠️Installation](https://mmdetection.readthedocs.io/en/latest/get_started.html) |
-[👀Model Zoo](https://mmdetection.readthedocs.io/en/latest/model_zoo.html) |
-[🆕Update News](https://mmdetection.readthedocs.io/en/latest/notes/changelog.html) |
-[🚀Ongoing Projects](https://github.com/open-mmlab/mmdetection/projects) |
-[🤔Reporting Issues](https://github.com/open-mmlab/mmdetection/issues/new/choose)
+### Training-free iterative refinement between detection and segmentation
+
+[Zhen Zhao](https://github.com/zhaozhen2333) · Gang Zhang · Xiaolin Hu · Liang Tang
+
+Beijing Forestry University · Tsinghua University · Chinese Institute for Brain Research
+
+[![Python](https://img.shields.io/badge/Python-3.8+-3776AB.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.8+-EE4C2C.svg)](https://pytorch.org/)
+[![MMDetection](https://img.shields.io/badge/MMDetection-3.3.0-4B8BBE.svg)](https://github.com/open-mmlab/mmdetection)
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+
+**English** | [简体中文](README_zh-CN.md)
 
 </div>
 
-<div align="center">
+## Overview
 
-English | [简体中文](README_zh-CN.md)
+Top-down instance segmentation normally follows a one-way **detect-then-segment** pipeline. Turbo-Inference closes the loop: coarse instance masks feed pixel-level localization and mask-quality information back to the detector, and the refined boxes are then used to predict better masks.
 
-</div>
+The method is **training-free**, reuses the pretrained mask head, and can be attached to existing top-down instance segmentation models without changing their training procedure.
 
-<div align="center">
-  <a href="https://openmmlab.medium.com/" style="text-decoration:none;">
-    <img src="https://user-images.githubusercontent.com/25839884/219255827-67c1a27f-f8c5-46a9-811d-5e57448c61d1.png" width="3%" alt="" /></a>
-  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
-  <a href="https://discord.com/channels/1037617289144569886/1046608014234370059" style="text-decoration:none;">
-    <img src="https://user-images.githubusercontent.com/25839884/218347213-c080267f-cbb6-443e-8532-8e1ed9a58ea9.png" width="3%" alt="" /></a>
-  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
-  <a href="https://twitter.com/OpenMMLab" style="text-decoration:none;">
-    <img src="https://user-images.githubusercontent.com/25839884/218346637-d30c8a0f-3eba-4699-8131-512fb06d46db.png" width="3%" alt="" /></a>
-  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
-  <a href="https://www.youtube.com/openmmlab" style="text-decoration:none;">
-    <img src="https://user-images.githubusercontent.com/25839884/218346691-ceb2116a-465a-40af-8424-9f30d2348ca9.png" width="3%" alt="" /></a>
-  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
-  <a href="https://space.bilibili.com/1293512903" style="text-decoration:none;">
-    <img src="https://user-images.githubusercontent.com/25839884/219026751-d7d14cce-a7c9-4e82-9942-8375fca65b99.png" width="3%" alt="" /></a>
-  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
-  <a href="https://www.zhihu.com/people/openmmlab" style="text-decoration:none;">
-    <img src="https://user-images.githubusercontent.com/25839884/219026120-ba71e48b-6e94-4bd4-b4e9-b7d175b5e362.png" width="3%" alt="" /></a>
-</div>
+<p align="center">
+  <img src="resources/turbo_inference/Turbo.jpg" width="100%" alt="Turbo-Inference overview">
+</p>
 
-<div align="center">
-<img src="https://github.com/open-mmlab/mmdetection/assets/17425982/6c29886f-ae7a-4a55-8be4-352ee85b7d3e"/>
-</div>
+The feedback loop contains three operations:
 
-## Introduction
+1. **Box refinement** maps each RoI mask back to image coordinates and derives a tighter box from its foreground support.
+2. **Maskness rescoring** estimates mask quality from the foreground probability distribution and fuses it with the classification score.
+3. **Turbo segmentation** extracts RoI features from the refined boxes and reuses the original mask head to predict more accurate masks.
 
-MMDetection is an open source object detection toolbox based on PyTorch. It is
-a part of the [OpenMMLab](https://openmmlab.com/) project.
+```text
+Detection → coarse masks → refined boxes and scores → refined masks
+                         ↖___________________________|
+```
 
-The main branch works with **PyTorch 1.8+**.
+## Highlights
 
-<img src="https://user-images.githubusercontent.com/12907710/187674113-2074d658-f2fb-42d1-ac15-9c4a695e64d7.png"/>
+- **No retraining:** all refinement happens during inference.
+- **Plug-and-play:** the shared `MaskBoxRefiner` module is configurable from the RoI head.
+- **Joint improvement:** both bounding-box AP and mask AP benefit from segmentation feedback.
+- **Broad applicability:** experimental paths are provided for Mask R-CNN, Cascade Mask R-CNN/HTC, QueryInst/Sparse R-CNN, and RTMDet-Ins.
+- **Reproducible:** the released Mask R-CNN implementation has been freshly evaluated on all 5,000 COCO 2017 validation images.
 
-<details open>
-<summary>Major features</summary>
+## Qualitative Results
 
-- **Modular Design**
+<p align="center">
+  <img src="resources/turbo_inference/coco_intro.jpg" width="92%" alt="Comparison with vanilla Mask R-CNN">
+</p>
 
-  We decompose the detection framework into different components and one can easily construct a customized object detection framework by combining different modules.
+Turbo-Inference produces tighter detection boxes, suppresses low-quality duplicate predictions, and improves instance masks.
 
-- **Support of multiple tasks out of box**
+<p align="center">
+  <img src="resources/turbo_inference/coco_result.jpg" width="100%" alt="Qualitative results on COCO">
+</p>
 
-  The toolbox directly supports multiple detection tasks such as **object detection**, **instance segmentation**, **panoptic segmentation**, and **semi-supervised object detection**.
+## Results
 
-- **High efficiency**
+### Main results on COCO
 
-  All basic bbox and mask operations run on GPUs. The training speed is faster than or comparable to other codebases, including [Detectron2](https://github.com/facebookresearch/detectron2), [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark) and [SimpleDet](https://github.com/TuSimple/simpledet).
+Turbo-Inference consistently improves representative two-stage, cascade, query-based, and one-stage instance segmentation frameworks. The following compact table reports the main results from the paper; FPS was measured on one RTX 2080 Ti with batch size 2.
 
-- **State of the art**
+| Method | Backbone | bbox AP | bbox AP w/ Turbo | segm AP | segm AP w/ Turbo | FPS → Turbo FPS |
+|:--|:--|--:|--:|--:|--:|--:|
+| Mask R-CNN | R50-FPN | 39.2 | **40.3 (+1.1)** | 35.4 | **36.7 (+1.3)** | 15.7 → 12.0 |
+| HTC | R50-FPN | 43.3 | **43.7 (+0.4)** | 38.3 | **39.2 (+0.9)** | 5.5 → 4.5 |
+| RTMDet-m | CSPX-PAFPN | 48.8 | **49.3 (+0.5)** | 42.1 | **42.4 (+0.3)** | 3.7 → 2.7 |
+| QueryInst | R50-FPN | 42.0 | **42.8 (+0.8)** | 37.5 | **38.7 (+1.2)** | 7.5 → 6.0 |
 
-  The toolbox stems from the codebase developed by the *MMDet* team, who won [COCO Detection Challenge](http://cocodataset.org/#detection-leaderboard) in 2018, and we keep pushing it forward.
-  The newly released [RTMDet](configs/rtmdet) also obtains new state-of-the-art results on real-time instance segmentation and rotated object detection tasks and the best parameter-accuracy trade-off on object detection.
+<details>
+<summary><b>Results with additional backbones and model scales</b></summary>
+
+| Method | Backbone | bbox AP | bbox AP w/ Turbo | segm AP | segm AP w/ Turbo | FPS → Turbo FPS |
+|:--|:--|--:|--:|--:|--:|--:|
+| Mask R-CNN | R101-FPN | 40.8 | **41.8** | 36.6 | **37.9** | 13.5 → 9.8 |
+| Mask R-CNN | X101-FPN | 42.8 | **43.9** | 38.4 | **39.7** | 6.8 → 5.5 |
+| Mask R-CNN | ConvNeXt-T-FPN | 46.2 | **47.5** | 41.7 | **42.8** | 14.5 → 10.8 |
+| Mask R-CNN | Swin-T | 46.0 | **47.5** | 41.7 | **42.9** | 9.8 → 7.4 |
+| Mask R-CNN | Swin-S | 48.2 | **49.4** | 43.2 | **44.5** | 9.3 → 6.3 |
+| Mask R-CNN | ViT-B | 51.5 | **52.0** | 45.7 | **46.8** | 3.9 → 3.3 |
+| Mask R-CNN | ConvNeXt-v2-FPN | 52.9 | **53.4** | 46.4 | **47.6** | 5.4 → 5.2 |
+| HTC | R101-FPN | 44.8 | **45.1** | 39.6 | **40.5** | 5.2 → 4.3 |
+| RTMDet-l | CSPX-PAFPN | 51.1 | **51.4** | 43.7 | **44.0** | 3.4 → 2.5 |
+| RTMDet-x | CSPX-PAFPN | 52.4 | **52.7** | 44.6 | **44.9** | 2.8 → 2.2 |
+| QueryInst | R101-FPN | 49.0 | **49.8** | 42.9 | **44.1** | 3.5 → 2.5 |
 
 </details>
 
-Apart from MMDetection, we also released [MMEngine](https://github.com/open-mmlab/mmengine) for model training and [MMCV](https://github.com/open-mmlab/mmcv) for computer vision research, which are heavily depended on by this toolbox.
+These results show that the feedback strategy is not tied to a particular detector, mask head, or backbone. As expected, the extra refinement stages trade inference speed for accuracy.
 
-## What's New
+### Compatibility with training-free methods
 
-💎 **We have released the pre-trained weights for MM-Grounding-DINO Swin-B and Swin-L, welcome to try and give feedback.**
+All variants below were freshly evaluated with the same public Mask R-CNN R50-FPN 2x checkpoint on all 5,000 COCO 2017 validation images. Neither Turbo-Inference nor Soft-NMS requires retraining.
 
-### Highlight
+| Method | Turbo-Inference | Soft-NMS | bbox AP | bbox AP50 | bbox AP75 | segm AP | segm AP50 | segm AP75 |
+|:--|:--:|:--:|--:|--:|--:|--:|--:|--:|
+| Original Mask R-CNN |  |  | 39.993 | 59.556 | 43.577 | 35.175 | 56.346 | 37.719 |
+| Mask R-CNN + Soft-NMS |  | ✓ | 40.618 | **59.600** | 44.620 | 35.423 | 56.371 | 38.126 |
+| Mask R-CNN + Turbo | ✓ |  | 40.279 | 59.482 | 43.901 | 36.400 | **56.498** | 39.277 |
+| Mask R-CNN + Turbo + Soft-NMS | ✓ | ✓ | **40.901** | 59.510 | **44.945** | **36.643** | 56.487 | **39.688** |
 
-**v3.3.0** was released in 5/1/2024:
+#### Complementary training-free refinement
 
-**[MM-Grounding-DINO: An Open and Comprehensive Pipeline for Unified Object Grounding and Detection](https://arxiv.org/abs/2401.02361)**
+Turbo-Inference and Soft-NMS improve different parts of the prediction pipeline. Soft-NMS adjusts scores from pairwise box overlaps, while Turbo-Inference uses instance-mask feedback to refine boxes, scores, and masks. Their gains are therefore complementary:
 
-Grounding DINO is a grounding pre-training model that unifies 2d open vocabulary object detection and phrase grounding, with wide applications. However, its training part has not been open sourced. Therefore, we propose MM-Grounding-DINO, which not only serves as an open source replication version of Grounding DINO, but also achieves significant performance improvement based on reconstructed data types, exploring different dataset combinations and initialization strategies. Moreover, we conduct evaluations from multiple dimensions, including OOD, REC, Phrase Grounding, OVD, and Fine-tune, to fully excavate the advantages and disadvantages of Grounding pre-training, hoping to provide inspiration for future work.
+- Turbo-Inference alone improves bbox AP by **+0.286** and segm AP by **+1.225** over the original inference path.
+- Adding Soft-NMS on top of Turbo-Inference contributes another **+0.622** bbox AP and **+0.243** segm AP.
+- The combined training-free pipeline reaches **40.901 bbox AP** and **36.643 segm AP**, improving the original model by **+0.908** and **+1.468**, respectively.
 
-code: [mm_grounding_dino/README.md](configs/mm_grounding_dino/README.md)
+This suggests that Turbo-Inference can be combined with other compatible training-free refinement or post-processing techniques for further gains, without updating the pretrained model weights.
 
-<div align=center>
-<img src="https://github.com/open-mmlab/mmdetection/assets/17425982/fb14d1ee-5469-44d2-b865-aac9850c429c"/>
-</div>
+The checkpoint used for verification has SHA-256:
 
-We are excited to announce our latest work on real-time object recognition tasks, **RTMDet**, a family of fully convolutional single-stage detectors. RTMDet not only achieves the best parameter-accuracy trade-off on object detection from tiny to extra-large model sizes but also obtains new state-of-the-art performance on instance segmentation and rotated object detection tasks. Details can be found in the [technical report](https://arxiv.org/abs/2212.07784). Pre-trained models are [here](configs/rtmdet).
+```text
+3e542a40ccc2952293c56bddc05e2002d681b9f6f20fde01f5908a5540b582b3
+```
 
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/rtmdet-an-empirical-study-of-designing-real/real-time-instance-segmentation-on-mscoco)](https://paperswithcode.com/sota/real-time-instance-segmentation-on-mscoco?p=rtmdet-an-empirical-study-of-designing-real)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/rtmdet-an-empirical-study-of-designing-real/object-detection-in-aerial-images-on-dota-1)](https://paperswithcode.com/sota/object-detection-in-aerial-images-on-dota-1?p=rtmdet-an-empirical-study-of-designing-real)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/rtmdet-an-empirical-study-of-designing-real/object-detection-in-aerial-images-on-hrsc2016)](https://paperswithcode.com/sota/object-detection-in-aerial-images-on-hrsc2016?p=rtmdet-an-empirical-study-of-designing-real)
-
-| Task                     | Dataset | AP                                   | FPS(TRT FP16 BS1 3090) |
-| ------------------------ | ------- | ------------------------------------ | ---------------------- |
-| Object Detection         | COCO    | 52.8                                 | 322                    |
-| Instance Segmentation    | COCO    | 44.6                                 | 188                    |
-| Rotated Object Detection | DOTA    | 78.9(single-scale)/81.3(multi-scale) | 121                    |
-
-<div align=center>
-<img src="https://user-images.githubusercontent.com/12907710/208044554-1e8de6b5-48d8-44e4-a7b5-75076c7ebb71.png"/>
-</div>
+> Turbo-Inference trades additional head computation for accuracy. The backbone is not recomputed, but the refined RoIs pass through the mask head again.
 
 ## Installation
 
-Please refer to [Installation](https://mmdetection.readthedocs.io/en/latest/get_started.html) for installation instructions.
+This repository is built on MMDetection 3.3.0. A typical installation is:
 
-## Getting Started
+```bash
+conda create -n turbo-inference python=3.8 -y
+conda activate turbo-inference
 
-Please see [Overview](https://mmdetection.readthedocs.io/en/latest/get_started.html) for the general introduction of MMDetection.
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install -U openmim
+mim install "mmengine>=0.7.1,<1.0.0"
+mim install "mmcv>=2.0.0rc4,<2.2.0"
+pip install -v -e .
+```
 
-For detailed user guides and advanced guides, please refer to our [documentation](https://mmdetection.readthedocs.io/en/latest/):
+See the [MMDetection installation guide](https://mmdetection.readthedocs.io/en/latest/get_started.html) if your CUDA or PyTorch version differs.
 
-- User Guides
+## Quick Start
 
-  <details>
+Place the public Mask R-CNN R50-FPN 2x checkpoint on disk, then run:
 
-  - [Train & Test](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#train-test)
-    - [Learn about Configs](https://mmdetection.readthedocs.io/en/latest/user_guides/config.html)
-    - [Inference with existing models](https://mmdetection.readthedocs.io/en/latest/user_guides/inference.html)
-    - [Dataset Prepare](https://mmdetection.readthedocs.io/en/latest/user_guides/dataset_prepare.html)
-    - [Test existing models on standard datasets](https://mmdetection.readthedocs.io/en/latest/user_guides/test.html)
-    - [Train predefined models on standard datasets](https://mmdetection.readthedocs.io/en/latest/user_guides/train.html)
-    - [Train with customized datasets](https://mmdetection.readthedocs.io/en/latest/user_guides/train.html#train-with-customized-datasets)
-    - [Train with customized models and standard datasets](https://mmdetection.readthedocs.io/en/latest/user_guides/new_model.html)
-    - [Finetuning Models](https://mmdetection.readthedocs.io/en/latest/user_guides/finetune.html)
-    - [Test Results Submission](https://mmdetection.readthedocs.io/en/latest/user_guides/test_results_submission.html)
-    - [Weight initialization](https://mmdetection.readthedocs.io/en/latest/user_guides/init_cfg.html)
-    - [Use a single stage detector as RPN](https://mmdetection.readthedocs.io/en/latest/user_guides/single_stage_as_rpn.html)
-    - [Semi-supervised Object Detection](https://mmdetection.readthedocs.io/en/latest/user_guides/semi_det.html)
-  - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
+```bash
+python demo/image_demo.py \
+  demo/demo.jpg \
+  configs/mask_rcnn/mask-rcnn_r50_fpn_2x_coco.py \
+  --weights /path/to/mask_rcnn_r50_fpn_2x_coco.pth \
+  --device cuda:0 \
+  --out-dir outputs/turbo_mask_rcnn
+```
 
-  </details>
+Evaluate on COCO with one GPU:
 
-- Advanced Guides
+```bash
+python tools/test.py \
+  configs/mask_rcnn/mask-rcnn_r50_fpn_2x_coco.py \
+  /path/to/mask_rcnn_r50_fpn_2x_coco.pth
+```
 
-  <details>
+Or reproduce the eight-GPU regression:
 
-  - [Basic Concepts](https://mmdetection.readthedocs.io/en/latest/advanced_guides/index.html#basic-concepts)
-  - [Component Customization](https://mmdetection.readthedocs.io/en/latest/advanced_guides/index.html#component-customization)
-  - [How to](https://mmdetection.readthedocs.io/en/latest/advanced_guides/index.html#how-to)
+```bash
+./tools/dist_test.sh \
+  configs/mask_rcnn/mask-rcnn_r50_fpn_2x_coco.py \
+  /path/to/mask_rcnn_r50_fpn_2x_coco.pth 8 \
+  --work-dir work_dirs/turbo_mask_rcnn_r50_8gpu
+```
 
-  </details>
+Prepare COCO in the standard MMDetection layout before evaluation:
 
-We also provide object detection colab tutorial [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](demo/MMDet_Tutorial.ipynb) and instance segmentation colab tutorial [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](demo/MMDet_InstanceSeg_Tutorial.ipynb).
+```text
+data/coco/
+├── annotations/instances_val2017.json
+└── val2017/
+```
 
-To migrate from MMDetection 2.x, please refer to [migration](https://mmdetection.readthedocs.io/en/latest/migration.html).
+## Configuration
 
-## Overview of Benchmark and Model Zoo
+`MaskBoxRefiner` is registered in [`mmdet/models/utils/mask_box_refiner.py`](mmdet/models/utils/mask_box_refiner.py) and is enabled from the RoI head:
 
-Results and models are available in the [model zoo](docs/en/model_zoo.md).
+```python
+roi_head=dict(
+    type='StandardRoIHead',
+    mask_box_refiner=dict(
+        type='MaskBoxRefiner',
+        box_threshold=0.20,
+        score_threshold=0.35,
+        mask_score_weight=0.35,
+        empty_mask_fallback=False))
+```
 
-<div align="center">
-  <b>Architectures</b>
-</div>
-<table align="center">
-  <tbody>
-    <tr align="center" valign="bottom">
-      <td>
-        <b>Object Detection</b>
-      </td>
-      <td>
-        <b>Instance Segmentation</b>
-      </td>
-      <td>
-        <b>Panoptic Segmentation</b>
-      </td>
-      <td>
-        <b>Other</b>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td>
-        <ul>
-            <li><a href="configs/fast_rcnn">Fast R-CNN (ICCV'2015)</a></li>
-            <li><a href="configs/faster_rcnn">Faster R-CNN (NeurIPS'2015)</a></li>
-            <li><a href="configs/rpn">RPN (NeurIPS'2015)</a></li>
-            <li><a href="configs/ssd">SSD (ECCV'2016)</a></li>
-            <li><a href="configs/retinanet">RetinaNet (ICCV'2017)</a></li>
-            <li><a href="configs/cascade_rcnn">Cascade R-CNN (CVPR'2018)</a></li>
-            <li><a href="configs/yolo">YOLOv3 (ArXiv'2018)</a></li>
-            <li><a href="configs/cornernet">CornerNet (ECCV'2018)</a></li>
-            <li><a href="configs/grid_rcnn">Grid R-CNN (CVPR'2019)</a></li>
-            <li><a href="configs/guided_anchoring">Guided Anchoring (CVPR'2019)</a></li>
-            <li><a href="configs/fsaf">FSAF (CVPR'2019)</a></li>
-            <li><a href="configs/centernet">CenterNet (CVPR'2019)</a></li>
-            <li><a href="configs/libra_rcnn">Libra R-CNN (CVPR'2019)</a></li>
-            <li><a href="configs/tridentnet">TridentNet (ICCV'2019)</a></li>
-            <li><a href="configs/fcos">FCOS (ICCV'2019)</a></li>
-            <li><a href="configs/reppoints">RepPoints (ICCV'2019)</a></li>
-            <li><a href="configs/free_anchor">FreeAnchor (NeurIPS'2019)</a></li>
-            <li><a href="configs/cascade_rpn">CascadeRPN (NeurIPS'2019)</a></li>
-            <li><a href="configs/foveabox">Foveabox (TIP'2020)</a></li>
-            <li><a href="configs/double_heads">Double-Head R-CNN (CVPR'2020)</a></li>
-            <li><a href="configs/atss">ATSS (CVPR'2020)</a></li>
-            <li><a href="configs/nas_fcos">NAS-FCOS (CVPR'2020)</a></li>
-            <li><a href="configs/centripetalnet">CentripetalNet (CVPR'2020)</a></li>
-            <li><a href="configs/autoassign">AutoAssign (ArXiv'2020)</a></li>
-            <li><a href="configs/sabl">Side-Aware Boundary Localization (ECCV'2020)</a></li>
-            <li><a href="configs/dynamic_rcnn">Dynamic R-CNN (ECCV'2020)</a></li>
-            <li><a href="configs/detr">DETR (ECCV'2020)</a></li>
-            <li><a href="configs/paa">PAA (ECCV'2020)</a></li>
-            <li><a href="configs/vfnet">VarifocalNet (CVPR'2021)</a></li>
-            <li><a href="configs/sparse_rcnn">Sparse R-CNN (CVPR'2021)</a></li>
-            <li><a href="configs/yolof">YOLOF (CVPR'2021)</a></li>
-            <li><a href="configs/yolox">YOLOX (CVPR'2021)</a></li>
-            <li><a href="configs/deformable_detr">Deformable DETR (ICLR'2021)</a></li>
-            <li><a href="configs/tood">TOOD (ICCV'2021)</a></li>
-            <li><a href="configs/ddod">DDOD (ACM MM'2021)</a></li>
-            <li><a href="configs/rtmdet">RTMDet (ArXiv'2022)</a></li>
-            <li><a href="configs/conditional_detr">Conditional DETR (ICCV'2021)</a></li>
-            <li><a href="configs/dab_detr">DAB-DETR (ICLR'2022)</a></li>
-            <li><a href="configs/dino">DINO (ICLR'2023)</a></li>
-            <li><a href="configs/glip">GLIP (CVPR'2022)</a></li>
-            <li><a href="configs/ddq">DDQ (CVPR'2023)</a></li>
-            <li><a href="projects/DiffusionDet">DiffusionDet (ArXiv'2023)</a></li>
-            <li><a href="projects/EfficientDet">EfficientDet (CVPR'2020)</a></li>
-            <li><a href="projects/ViTDet">ViTDet (ECCV'2022)</a></li>
-            <li><a href="projects/Detic">Detic (ECCV'2022)</a></li>
-            <li><a href="projects/CO-DETR">CO-DETR (ICCV'2023)</a></li>
-      </ul>
-      </td>
-      <td>
-        <ul>
-          <li><a href="configs/mask_rcnn">Mask R-CNN (ICCV'2017)</a></li>
-          <li><a href="configs/cascade_rcnn">Cascade Mask R-CNN (CVPR'2018)</a></li>
-          <li><a href="configs/ms_rcnn">Mask Scoring R-CNN (CVPR'2019)</a></li>
-          <li><a href="configs/htc">Hybrid Task Cascade (CVPR'2019)</a></li>
-          <li><a href="configs/yolact">YOLACT (ICCV'2019)</a></li>
-          <li><a href="configs/instaboost">InstaBoost (ICCV'2019)</a></li>
-          <li><a href="configs/solo">SOLO (ECCV'2020)</a></li>
-          <li><a href="configs/point_rend">PointRend (CVPR'2020)</a></li>
-          <li><a href="configs/detectors">DetectoRS (ArXiv'2020)</a></li>
-          <li><a href="configs/solov2">SOLOv2 (NeurIPS'2020)</a></li>
-          <li><a href="configs/scnet">SCNet (AAAI'2021)</a></li>
-          <li><a href="configs/queryinst">QueryInst (ICCV'2021)</a></li>
-          <li><a href="configs/mask2former">Mask2Former (ArXiv'2021)</a></li>
-          <li><a href="configs/condinst">CondInst (ECCV'2020)</a></li>
-          <li><a href="projects/SparseInst">SparseInst (CVPR'2022)</a></li>
-          <li><a href="configs/rtmdet">RTMDet (ArXiv'2022)</a></li>
-          <li><a href="configs/boxinst">BoxInst (CVPR'2021)</a></li>
-          <li><a href="projects/ConvNeXt-V2">ConvNeXt-V2 (Arxiv'2023)</a></li>
-        </ul>
-      </td>
-      <td>
-        <ul>
-          <li><a href="configs/panoptic_fpn">Panoptic FPN (CVPR'2019)</a></li>
-          <li><a href="configs/maskformer">MaskFormer (NeurIPS'2021)</a></li>
-          <li><a href="configs/mask2former">Mask2Former (ArXiv'2021)</a></li>
-          <li><a href="configs/XDecoder">XDecoder (CVPR'2023)</a></li>
-        </ul>
-      </td>
-      <td>
-        </ul>
-          <li><b>Contrastive Learning</b></li>
-        <ul>
-        <ul>
-          <li><a href="configs/selfsup_pretrain">SwAV (NeurIPS'2020)</a></li>
-          <li><a href="configs/selfsup_pretrain">MoCo (CVPR'2020)</a></li>
-          <li><a href="configs/selfsup_pretrain">MoCov2 (ArXiv'2020)</a></li>
-        </ul>
-        </ul>
-        </ul>
-          <li><b>Distillation</b></li>
-        <ul>
-        <ul>
-          <li><a href="configs/ld">Localization Distillation (CVPR'2022)</a></li>
-          <li><a href="configs/lad">Label Assignment Distillation (WACV'2022)</a></li>
-        </ul>
-        </ul>
-          <li><b>Semi-Supervised Object Detection</b></li>
-        <ul>
-        <ul>
-          <li><a href="configs/soft_teacher">Soft Teacher (ICCV'2021)</a></li>
-        </ul>
-        </ul>
-      </ul>
-      </td>
-    </tr>
-</td>
-    </tr>
-  </tbody>
-</table>
+| Option | Meaning |
+|:--|:--|
+| `box_threshold` | Foreground threshold used to derive a tight box from a mask. |
+| `score_threshold` | Foreground threshold used when computing maskness. |
+| `mask_score_weight` | Weight of the mask-aware score in score fusion. |
+| `empty_mask_fallback` | Whether an empty foreground mask falls back to the input box. |
 
-<div align="center">
-  <b>Components</b>
-</div>
-<table align="center">
-  <tbody>
-    <tr align="center" valign="bottom">
-      <td>
-        <b>Backbones</b>
-      </td>
-      <td>
-        <b>Necks</b>
-      </td>
-      <td>
-        <b>Loss</b>
-      </td>
-      <td>
-        <b>Common</b>
-      </td>
-    </tr>
-    <tr valign="top">
-      <td>
-      <ul>
-        <li>VGG (ICLR'2015)</li>
-        <li>ResNet (CVPR'2016)</li>
-        <li>ResNeXt (CVPR'2017)</li>
-        <li>MobileNetV2 (CVPR'2018)</li>
-        <li><a href="configs/hrnet">HRNet (CVPR'2019)</a></li>
-        <li><a href="configs/empirical_attention">Generalized Attention (ICCV'2019)</a></li>
-        <li><a href="configs/gcnet">GCNet (ICCVW'2019)</a></li>
-        <li><a href="configs/res2net">Res2Net (TPAMI'2020)</a></li>
-        <li><a href="configs/regnet">RegNet (CVPR'2020)</a></li>
-        <li><a href="configs/resnest">ResNeSt (ArXiv'2020)</a></li>
-        <li><a href="configs/pvt">PVT (ICCV'2021)</a></li>
-        <li><a href="configs/swin">Swin (CVPR'2021)</a></li>
-        <li><a href="configs/pvt">PVTv2 (ArXiv'2021)</a></li>
-        <li><a href="configs/resnet_strikes_back">ResNet strikes back (ArXiv'2021)</a></li>
-        <li><a href="configs/efficientnet">EfficientNet (ArXiv'2021)</a></li>
-        <li><a href="configs/convnext">ConvNeXt (CVPR'2022)</a></li>
-        <li><a href="projects/ConvNeXt-V2">ConvNeXtv2 (ArXiv'2023)</a></li>
-      </ul>
-      </td>
-      <td>
-      <ul>
-        <li><a href="configs/pafpn">PAFPN (CVPR'2018)</a></li>
-        <li><a href="configs/nas_fpn">NAS-FPN (CVPR'2019)</a></li>
-        <li><a href="configs/carafe">CARAFE (ICCV'2019)</a></li>
-        <li><a href="configs/fpg">FPG (ArXiv'2020)</a></li>
-        <li><a href="configs/groie">GRoIE (ICPR'2020)</a></li>
-        <li><a href="configs/dyhead">DyHead (CVPR'2021)</a></li>
-      </ul>
-      </td>
-      <td>
-        <ul>
-          <li><a href="configs/ghm">GHM (AAAI'2019)</a></li>
-          <li><a href="configs/gfl">Generalized Focal Loss (NeurIPS'2020)</a></li>
-          <li><a href="configs/seesaw_loss">Seasaw Loss (CVPR'2021)</a></li>
-        </ul>
-      </td>
-      <td>
-        <ul>
-          <li><a href="configs/faster_rcnn/faster-rcnn_r50_fpn_ohem_1x_coco.py">OHEM (CVPR'2016)</a></li>
-          <li><a href="configs/gn">Group Normalization (ECCV'2018)</a></li>
-          <li><a href="configs/dcn">DCN (ICCV'2017)</a></li>
-          <li><a href="configs/dcnv2">DCNv2 (CVPR'2019)</a></li>
-          <li><a href="configs/gn+ws">Weight Standardization (ArXiv'2019)</a></li>
-          <li><a href="configs/pisa">Prime Sample Attention (CVPR'2020)</a></li>
-          <li><a href="configs/strong_baselines">Strong Baselines (CVPR'2021)</a></li>
-          <li><a href="configs/resnet_strikes_back">Resnet strikes back (ArXiv'2021)</a></li>
-        </ul>
-      </td>
-    </tr>
-</td>
-    </tr>
-  </tbody>
-</table>
+Set `mask_box_refiner=None` to recover the upstream MMDetection inference path. The provided Mask R-CNN R50-FPN configuration also uses Soft-NMS with an IoU threshold of 0.5.
 
-Some other methods are also supported in [projects using MMDetection](./docs/en/notes/projects.md).
+## Stage-wise Refinement
 
-## FAQ
+<p align="center">
+  <img src="resources/turbo_inference/stage.jpg" width="88%" alt="Stage-wise Turbo-Inference refinement">
+</p>
 
-Please refer to [FAQ](docs/en/notes/faq.md) for frequently asked questions.
+For Mask R-CNN and HTC, four stages are used by default: detection, vanilla segmentation, turbo detection, and turbo segmentation. QueryInst uses three stages because another mask-head pass can disturb the interaction between its proposal features and refined RoI features.
 
-## Contributing
+## Implementation Status
 
-We appreciate all contributions to improve MMDetection. Ongoing projects can be found in out [GitHub Projects](https://github.com/open-mmlab/mmdetection/projects). Welcome community users to participate in these projects. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
+| Model family | Turbo path | Shared module | Full COCO regression |
+|:--|:--:|:--:|:--:|
+| Mask R-CNN | ✓ | ✓ | ✓ |
+| Cascade Mask R-CNN / HTC | ✓ | In progress | In progress |
+| QueryInst / Sparse R-CNN | ✓ | In progress | In progress |
+| RTMDet-Ins | ✓ | In progress | In progress |
 
-## Acknowledgement
-
-MMDetection is an open source project that is contributed by researchers and engineers from various colleges and companies. We appreciate all the contributors who implement their methods or add new features, as well as users who give valuable feedbacks.
-We wish that the toolbox and benchmark could serve the growing research community by providing a flexible toolkit to reimplement existing methods and develop their own new detectors.
+The fresh Turbo-only and Turbo + Soft-NMS evaluation logs are stored in `work_dirs/turbo_mask_rcnn_r50_no_softnms_8gpu/` and `work_dirs/turbo_mask_rcnn_r50_readme_rerun_8gpu/`, respectively. CondInst is intentionally excluded from this release.
 
 ## Citation
 
-If you use this toolbox or benchmark in your research, please cite this project.
+If this project is useful in your research, please cite:
 
-```
-@article{mmdetection,
-  title   = {{MMDetection}: Open MMLab Detection Toolbox and Benchmark},
-  author  = {Chen, Kai and Wang, Jiaqi and Pang, Jiangmiao and Cao, Yuhang and
-             Xiong, Yu and Li, Xiaoxiao and Sun, Shuyang and Feng, Wansen and
-             Liu, Ziwei and Xu, Jiarui and Zhang, Zheng and Cheng, Dazhi and
-             Zhu, Chenchen and Cheng, Tianheng and Zhao, Qijie and Li, Buyu and
-             Lu, Xin and Zhu, Rui and Wu, Yue and Dai, Jifeng and Wang, Jingdong
-             and Shi, Jianping and Ouyang, Wanli and Loy, Chen Change and Lin, Dahua},
-  journal= {arXiv preprint arXiv:1906.07155},
-  year={2019}
+```bibtex
+@article{zhao2026turboinference,
+  title   = {A Turbo-Inference Strategy for Object Detection and Instance Segmentation},
+  author  = {Zhao, Zhen and Zhang, Gang and Hu, Xiaolin and Tang, Liang},
+  year    = {2026}
 }
 ```
 
+The BibTeX entry will be updated with the venue and arXiv identifier after publication.
+
+## Acknowledgements
+
+This implementation is based on [MMDetection](https://github.com/open-mmlab/mmdetection). We thank the OpenMMLab contributors and the authors of the supported instance segmentation methods.
+
 ## License
 
-This project is released under the [Apache 2.0 license](LICENSE).
-
-## Projects in OpenMMLab
-
-- [MMEngine](https://github.com/open-mmlab/mmengine): OpenMMLab foundational library for training deep learning models.
-- [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab foundational library for computer vision.
-- [MMPreTrain](https://github.com/open-mmlab/mmpretrain): OpenMMLab pre-training toolbox and benchmark.
-- [MMagic](https://github.com/open-mmlab/mmagic): Open**MM**Lab **A**dvanced, **G**enerative and **I**ntelligent **C**reation toolbox.
-- [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab detection toolbox and benchmark.
-- [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab's next-generation platform for general 3D object detection.
-- [MMRotate](https://github.com/open-mmlab/mmrotate): OpenMMLab rotated object detection toolbox and benchmark.
-- [MMYOLO](https://github.com/open-mmlab/mmyolo): OpenMMLab YOLO series toolbox and benchmark.
-- [MMSegmentation](https://github.com/open-mmlab/mmsegmentation): OpenMMLab semantic segmentation toolbox and benchmark.
-- [MMOCR](https://github.com/open-mmlab/mmocr): OpenMMLab text detection, recognition, and understanding toolbox.
-- [MMPose](https://github.com/open-mmlab/mmpose): OpenMMLab pose estimation toolbox and benchmark.
-- [MMHuman3D](https://github.com/open-mmlab/mmhuman3d): OpenMMLab 3D human parametric model toolbox and benchmark.
-- [MMSelfSup](https://github.com/open-mmlab/mmselfsup): OpenMMLab self-supervised learning toolbox and benchmark.
-- [MMRazor](https://github.com/open-mmlab/mmrazor): OpenMMLab model compression toolbox and benchmark.
-- [MMFewShot](https://github.com/open-mmlab/mmfewshot): OpenMMLab fewshot learning toolbox and benchmark.
-- [MMAction2](https://github.com/open-mmlab/mmaction2): OpenMMLab's next-generation action understanding toolbox and benchmark.
-- [MMTracking](https://github.com/open-mmlab/mmtracking): OpenMMLab video perception toolbox and benchmark.
-- [MMFlow](https://github.com/open-mmlab/mmflow): OpenMMLab optical flow toolbox and benchmark.
-- [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab image and video editing toolbox.
-- [MMGeneration](https://github.com/open-mmlab/mmgeneration): OpenMMLab image and video generative models toolbox.
-- [MMDeploy](https://github.com/open-mmlab/mmdeploy): OpenMMLab model deployment framework.
-- [MIM](https://github.com/open-mmlab/mim): MIM installs OpenMMLab packages.
-- [MMEval](https://github.com/open-mmlab/mmeval): A unified evaluation library for multiple machine learning libraries.
-- [Playground](https://github.com/open-mmlab/playground): A central hub for gathering and showcasing amazing projects built upon OpenMMLab.
+This codebase is released under the [Apache 2.0 license](LICENSE). Please also follow the licenses of MMDetection, its dependencies, datasets, and pretrained models.

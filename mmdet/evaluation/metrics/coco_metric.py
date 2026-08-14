@@ -234,6 +234,15 @@ class CocoMetric(BaseMetric):
             labels = result['labels']
             bboxes = result['bboxes']
             scores = result['scores']
+
+            if 'refine_bboxes' in result:
+                refine_bboxes = result['refine_bboxes']
+            else:
+                refine_bboxes = result['bboxes']
+            # print("bboxes: ", bboxes.shape)
+            # print("bboxes: ", bboxes)
+            # print("refine_bboxes: ", refine_bboxes.shape)
+            # print("refine_bboxes: ", refine_bboxes)
             # bbox results
             for i, label in enumerate(labels):
                 data = dict()
@@ -259,6 +268,56 @@ class CocoMetric(BaseMetric):
                     masks[i]['counts'] = masks[i]['counts'].decode()
                 data['segmentation'] = masks[i]
                 segm_json_results.append(data)
+
+        all_mean_ious = []
+        all_mean_delta_bs = []
+
+        for result in results:
+            if 'mean_iou_s1_s3' not in result:
+                continue
+
+            mean_iou_s1_s3 = result['mean_iou_s1_s3']
+            mean_delta_b_s1_s3 = result['mean_delta_b_s1_s3']
+
+            # 跳过空 / dummy
+            if mean_iou_s1_s3.size == 0:
+                continue
+            if mean_iou_s1_s3.size == 1 and mean_iou_s1_s3[0] == 0:
+                continue
+
+            all_mean_ious.append(float(mean_iou_s1_s3[0]))
+            all_mean_delta_bs.append(float(mean_delta_b_s1_s3[0]))
+
+        if all_mean_ious:
+            final_mean_iou = sum(all_mean_ious) / len(all_mean_ious)
+            final_mean_delta_b = sum(all_mean_delta_bs) / len(all_mean_delta_bs)
+            print("final_mean_iou: ", final_mean_iou)
+            print("final_mean_delta_b: ", final_mean_delta_b)
+
+        all_mean_ious = []
+        all_mean_delta_bs = []
+
+        for result in results:
+            if 'mean_iou_s3_s5' not in result:
+                continue
+
+            mean_iou_s3_s5 = result['mean_iou_s3_s5']
+            mean_delta_b_s3_s5 = result['mean_delta_b_s3_s5']
+
+            # 跳过空 / dummy
+            if mean_iou_s3_s5.size == 0:
+                continue
+            if mean_iou_s3_s5.size == 1 and mean_iou_s3_s5[0] == 0:
+                continue
+
+            all_mean_ious.append(float(mean_iou_s3_s5[0]))
+            all_mean_delta_bs.append(float(mean_delta_b_s3_s5[0]))
+
+        if all_mean_ious:
+            final_mean_iou = sum(all_mean_ious) / len(all_mean_ious)
+            final_mean_delta_b = sum(all_mean_delta_bs) / len(all_mean_delta_bs)
+            print("final_mean_iou: ", final_mean_iou)
+            print("final_mean_delta_b: ", final_mean_delta_b)
 
         result_files = dict()
         result_files['bbox'] = f'{outfile_prefix}.bbox.json'
@@ -360,6 +419,21 @@ class CocoMetric(BaseMetric):
             result['bboxes'] = pred['bboxes'].cpu().numpy()
             result['scores'] = pred['scores'].cpu().numpy()
             result['labels'] = pred['labels'].cpu().numpy()
+
+            if "refine_bboxes" in pred:
+                result['refine_bboxes'] = pred['refine_bboxes'].cpu().numpy()
+
+            # print("****************************************")
+            # print(pred['mean_iou_s1_s3'])
+            if "mean_iou_s1_s3" in pred:
+                result['mean_iou_s1_s3'] = pred['mean_iou_s1_s3'].cpu().numpy()
+            if "mean_delta_b_s1_s3" in pred:
+                result['mean_delta_b_s1_s3'] = pred['mean_delta_b_s1_s3'].cpu().numpy()
+
+            if "mean_iou_s3_s5" in pred:
+                result['mean_iou_s3_s5'] = pred['mean_iou_s3_s5'].cpu().numpy()
+            if "mean_delta_b_s3_s5" in pred:
+                result['mean_delta_b_s3_s5'] = pred['mean_delta_b_s3_s5'].cpu().numpy()
             # encode mask to RLE
             if 'masks' in pred:
                 result['masks'] = encode_mask_results(
@@ -396,6 +470,7 @@ class CocoMetric(BaseMetric):
         logger: MMLogger = MMLogger.get_current_instance()
 
         # split gt and prediction list
+        print("here, here")
         gts, preds = zip(*results)
 
         tmp_dir = None
@@ -439,7 +514,7 @@ class CocoMetric(BaseMetric):
                 log_msg = []
                 for i, num in enumerate(self.proposal_nums):
                     eval_results[f'AR@{num}'] = ar[i]
-                    log_msg.append(f'\nAR@{num}\t{ar[i]:.4f}')
+                    log_msg.append(f'\nAR@{num}\t{ar[i]:.5f}')
                 log_msg = ''.join(log_msg)
                 logger.info(log_msg)
                 continue
@@ -511,7 +586,7 @@ class CocoMetric(BaseMetric):
 
                 for item in metric_items:
                     val = float(
-                        f'{coco_eval.stats[coco_metric_names[item]]:.3f}')
+                        f'{coco_eval.stats[coco_metric_names[item]]:.5f}')
                     eval_results[item] = val
             else:
                 coco_eval.evaluate()
@@ -537,8 +612,8 @@ class CocoMetric(BaseMetric):
                         else:
                             ap = float('nan')
                         t.append(f'{nm["name"]}')
-                        t.append(f'{round(ap, 3)}')
-                        eval_results[f'{nm["name"]}_precision'] = round(ap, 3)
+                        t.append(f'{round(ap, 5)}')
+                        eval_results[f'{nm["name"]}_precision'] = round(ap, 5)
 
                         # indexes of IoU  @50 and @75
                         for iou in [0, 5]:
@@ -548,7 +623,7 @@ class CocoMetric(BaseMetric):
                                 ap = np.mean(precision)
                             else:
                                 ap = float('nan')
-                            t.append(f'{round(ap, 3)}')
+                            t.append(f'{round(ap, 5)}')
 
                         # indexes of area of small, median and large
                         for area in [1, 2, 3]:
@@ -558,7 +633,7 @@ class CocoMetric(BaseMetric):
                                 ap = np.mean(precision)
                             else:
                                 ap = float('nan')
-                            t.append(f'{round(ap, 3)}')
+                            t.append(f'{round(ap, 5)}')
                         results_per_category.append(tuple(t))
 
                     num_columns = len(results_per_category[0])
@@ -585,13 +660,37 @@ class CocoMetric(BaseMetric):
                 for metric_item in metric_items:
                     key = f'{metric}_{metric_item}'
                     val = coco_eval.stats[coco_metric_names[metric_item]]
-                    eval_results[key] = float(f'{round(val, 3)}')
+                    eval_results[key] = float(f'{round(val, 5)}')
 
                 ap = coco_eval.stats[:6]
-                logger.info(f'{metric}_mAP_copypaste: {ap[0]:.3f} '
-                            f'{ap[1]:.3f} {ap[2]:.3f} {ap[3]:.3f} '
-                            f'{ap[4]:.3f} {ap[5]:.3f}')
+                logger.info(f'{metric}_mAP_copypaste: {ap[0]:.5f} '
+                            f'{ap[1]:.5f} {ap[2]:.5f} {ap[3]:.5f} '
+                            f'{ap[4]:.5f} {ap[5]:.5f}')
 
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return eval_results
+
+import numpy as np
+
+def bbox_iou_xyxy_np(boxes1, boxes2, eps=1e-6):
+    """
+    boxes1, boxes2: np.ndarray [N, 4] in xyxy
+    return: np.ndarray [N] IoU for each matched pair
+    """
+    x1 = np.maximum(boxes1[:, 0], boxes2[:, 0])
+    y1 = np.maximum(boxes1[:, 1], boxes2[:, 1])
+    x2 = np.minimum(boxes1[:, 2], boxes2[:, 2])
+    y2 = np.minimum(boxes1[:, 3], boxes2[:, 3])
+
+    inter_w = np.maximum(x2 - x1, 0)
+    inter_h = np.maximum(y2 - y1, 0)
+    inter = inter_w * inter_h
+
+    area1 = np.maximum(boxes1[:, 2] - boxes1[:, 0], 0) * \
+            np.maximum(boxes1[:, 3] - boxes1[:, 1], 0)
+    area2 = np.maximum(boxes2[:, 2] - boxes2[:, 0], 0) * \
+            np.maximum(boxes2[:, 3] - boxes2[:, 1], 0)
+
+    union = area1 + area2 - inter + eps
+    return inter / union

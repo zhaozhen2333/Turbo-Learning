@@ -4,6 +4,7 @@ from .gaussian_target import (gather_feat, gaussian_radius,
                               get_topk_from_heatmap, transpose_and_gather_feat)
 from .image import imrenormalize
 from .make_divisible import make_divisible
+from .mask_box_refiner import MaskBoxRefiner
 # Disable yapf because it conflicts with isort.
 # yapf: disable
 from .misc import (align_tensor, aligned_bilinear, center_of_mass,
@@ -33,5 +34,6 @@ __all__ = [
     'samplelist_boxtype2tensor', 'filter_gt_instances', 'rename_loss_dict',
     'reweight_loss_dict', 'relative_coordinate_maps', 'aligned_bilinear',
     'unfold_wo_center', 'imrenormalize', 'VLFuse', 'permute_and_flatten',
-    'BertEncoderLayer', 'align_tensor', 'weighted_boxes_fusion'
+    'BertEncoderLayer', 'align_tensor', 'weighted_boxes_fusion',
+    'MaskBoxRefiner'
 ]

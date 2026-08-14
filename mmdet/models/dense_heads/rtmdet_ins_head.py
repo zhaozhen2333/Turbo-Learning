@@ -422,6 +422,71 @@ class RTMDetInsHead(RTMDetHead):
             with_nms=with_nms,
             img_meta=img_meta)
 
+    def mask_processing(self, mask_pred, rois, img_h, img_w, threshold=0.40):
+        # mask_pred = mask_pred.sigmoid()  # (N, 1, h, w)
+        device = mask_pred.device
+        # img_w = img_shape[1]
+        # img_h = img_shape[0]
+        x0_int, y0_int = 0, 0
+        x1_int, y1_int = img_w, img_h
+        # rois = torch.round(rois)
+        x0, y0, x1, y1 = torch.split(rois, 1, dim=1)  # each is Nx1
+
+        N = mask_pred.shape[0]
+
+        img_y = torch.arange(y0_int, y1_int, device=device).to(torch.float32) + 0.5
+        img_x = torch.arange(x0_int, x1_int, device=device).to(torch.float32) + 0.5
+        img_y = (img_y - y0) / (y1 - y0) * 2 - 1
+        img_x = (img_x - x0) / (x1 - x0) * 2 - 1
+
+        if torch.isinf(img_x).any():
+            inds = torch.where(torch.isinf(img_x))
+            img_x[inds] = 0
+        if torch.isinf(img_y).any():
+            inds = torch.where(torch.isinf(img_y))
+            img_y[inds] = 0
+
+        gx = img_x[:, None, :].expand(N, img_y.size(1), img_x.size(1))
+        gy = img_y[:, :, None].expand(N, img_y.size(1), img_x.size(1))
+        grid = torch.stack([gx, gy], dim=3)
+        del gx, gy, img_x, img_y
+        torch.cuda.empty_cache()
+
+        mask_pred = F.grid_sample(
+            mask_pred.to(dtype=torch.float32), grid, align_corners=False).squeeze(1)  # (N, H, W)
+        del grid
+        torch.cuda.empty_cache()
+
+        # ----------------------------------------------------------------------------------
+        mask_pred_decode = (mask_pred >= threshold).to(dtype=torch.bool)  # (N, h, w)
+        # mask_pred_decode_ = (mask_pred >= threshold).to(dtype=torch.bool)  # (N, h, w)
+        # seg_masks = mask_pred_decode.float()  # (N, h, w)
+        # sum_masks = seg_masks.sum((1, 2)).float()
+
+        del mask_pred
+        torch.cuda.empty_cache()
+
+        # valid_mask = seg_scores > scores_thr  # (N,)
+        # inds = valid_mask.nonzero(as_tuple=False).squeeze(1)  # (N,)
+        # mask_pred_decode = mask_pred_decode[inds]
+        x_any = torch.any(mask_pred_decode, dim=1)  # (N, 600)
+        y_any = torch.any(mask_pred_decode, dim=2)
+        del mask_pred_decode
+        torch.cuda.empty_cache()
+        bbox_change = torch.zeros(N, 4, dtype=torch.float,
+                                  device=device)  # list[tensor(x0, y0, x1, y1), ...]
+        for idx in range(N):
+            x_ = torch.where(x_any[idx, :])[0]
+            y_ = torch.where(y_any[idx, :])[0]
+            if len(x_) > 0 and len(y_) > 0:
+                bbox_change[idx, :] = torch.as_tensor(
+                    [x_[0], y_[0], x_[-1] + 1, y_[-1] + 1], dtype=torch.float32
+                )
+        # rois[inds] = bbox_change
+        # bbox_change = (bbox_change + rois) / 2
+        # return bbox_change, seg_masks, sum_masks, seg_scores  # (N, H, W)
+        return bbox_change  # (N, H, W)
+
     def _bbox_mask_post_process(
             self,
             results: InstanceData,
@@ -491,10 +556,28 @@ class RTMDetInsHead(RTMDetHead):
 
             # process masks
             mask_logits = self._mask_predict_by_feat_single(
-                mask_feat, results.kernels, results.priors)
+                mask_feat, results.kernels, results.priors)  # [47, 80, 80]
+            # print(f'mask_0 shape: {mask_logits.size()}')
 
             mask_logits = F.interpolate(
                 mask_logits.unsqueeze(0), scale_factor=stride, mode='bilinear')
+            # print(f'mask_1 shape: {mask_logits.size()}')
+
+            # maskness.
+            mask_pred = mask_logits.squeeze(0).sigmoid()  # (N, 1, h, w)
+            seg_masks = (mask_pred >= 0.20).to(dtype=torch.float32)  # (N, h, w)
+            sum_masks = seg_masks.sum((1, 2)).float() + 1e-6
+            seg_scores = (mask_pred.squeeze(1) * seg_masks.float()).sum((1, 2)) / sum_masks
+            if torch.isnan(seg_scores).any():
+                inds = torch.where(torch.isnan(seg_scores))
+                seg_scores[inds] = 0
+            # results.scores = results.scores * seg_scores
+
+            mask_score = results.scores * seg_scores
+            # scores = mask_score * 0.5 + scores * 0.5
+            # mask_score = results.scores * seg_scores
+            results.scores = mask_score * 0.5 + results.scores * 0.5
+
             if rescale:
                 ori_h, ori_w = img_meta['ori_shape'][:2]
                 mask_logits = F.interpolate(
@@ -505,6 +588,28 @@ class RTMDetInsHead(RTMDetHead):
                     ],
                     mode='bilinear',
                     align_corners=False)[..., :ori_h, :ori_w]
+
+            # ----------------------------------------------------------------------------------
+            N = mask_logits.shape[1]
+            device = mask_logits.device
+            mask_pred_decode = (mask_logits.squeeze(0) >= 0.23).to(dtype=torch.bool)  # (N, h, w)
+            x_any = torch.any(mask_pred_decode, dim=1)  # (N, 600)
+            y_any = torch.any(mask_pred_decode, dim=2)
+            del mask_pred_decode
+            torch.cuda.empty_cache()
+            bbox_change = torch.zeros(N, 4, dtype=torch.float,
+                                      device=device)  # list[tensor(x0, y0, x1, y1), ...]
+            for idx in range(N):
+                x_ = torch.where(x_any[idx, :])[0]
+                y_ = torch.where(y_any[idx, :])[0]
+                if len(x_) > 0 and len(y_) > 0:
+                    bbox_change[idx, :] = torch.as_tensor(
+                        [x_[0], y_[0], x_[-1] + 1, y_[-1] + 1], dtype=torch.float32
+                    )
+            bboxes = results.bboxes
+            bboxes = (bboxes + bbox_change) / 2
+            results.bboxes = bboxes
+
             masks = mask_logits.sigmoid().squeeze(0)
             masks = masks > cfg.mask_thr_binary
             results.masks = masks
